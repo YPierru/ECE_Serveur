@@ -9,11 +9,10 @@ public class ChatServer {
 		//int port = Integer.parseInt(args[0]);
 		try{
 			ServerSocket server = new ServerSocket(5555);
+			System.out.println("alive");
 			while(true){
 				try{
-					System.out.println("alive");
 					Socket connection = server.accept();
-					System.out.println("Client connecté");
 					ConnectionHandler handler = new ConnectionHandler(connection);
 					new Thread(handler).start(); 
 				}
@@ -23,7 +22,7 @@ public class ChatServer {
 			}
 		}
 		catch(IOException ioe){
-			System.err.println("Couldn't run" + "server on port" + 5555);
+			System.err.println("Couldn't run server on port " + 5555);
 			return;
 		}
 	}
