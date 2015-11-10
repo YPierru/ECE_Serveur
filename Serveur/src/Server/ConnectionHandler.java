@@ -21,9 +21,33 @@ public class ConnectionHandler implements Runnable{
 	
 	public void run(){
 		try{
-			this.username = reader.readUTF();
+			username = reader.readUTF();
+			String raw = "";
+			while(true){
+				raw = reader.readUTF();
+				String[] tRaw = raw.split("/;");
+				if(tRaw[0].equals("m")){
+					distributeMessage(tRaw[2], tRaw[1]);
+				}
+				else if (tRaw[0].equals("cr")){
+					
+				}
+				else if(tRaw[0].equals("dr")){
+					
+				}
+			}
 		}
 		catch(IOException ioe){
+			System.err.println(ioe.getStackTrace().toString());
+		}
+	}
+	
+	public void distributeMessage(String message, String to){
+		try{
+			
+		}
+		catch(IOException ioe)
+		{
 			System.err.println(ioe.getStackTrace().toString());
 		}
 	}
