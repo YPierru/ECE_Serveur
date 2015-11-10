@@ -20,7 +20,7 @@ public class Room {
 		this.enable = true;
 	}
 	
-	public void deleteRoom(String name, String requester){
+	public void deleteRoom(String requester){
 		if(requester.equals(owner)){
 			enable = false;
 		}
