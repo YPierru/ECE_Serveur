@@ -4,26 +4,35 @@ import java.net.*;
 
 public class ChatServer {
 
+	private ServerSocket server;
+	private int port;
+	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		//int port = Integer.parseInt(args[0]);
+			ChatServer chat = new ChatServer( Integer.parseInt(args[0]));
+			chat.Connection();
+	}
+	
+	public ChatServer(int port){
 		try{
-			ServerSocket server = new ServerSocket(5555);
-			System.out.println("alive");
-			while(true){
-				try{
-					Socket connection = server.accept();
-					ConnectionHandler handler = new ConnectionHandler(connection);
-					new Thread(handler).start(); 
-				}
-				catch(IOException ioe1){
-					
-				}
+			this.port = port;
+			this. server = new ServerSocket(port);
+		}catch(IOException ioe){
+			System.err.println("Couldn't run server on port " + port);
+		}
+	}
+	
+	public void Connection(){
+		while(true){
+			try{
+				Socket connection = server.accept();
+				ConnectionHandler handler = new ConnectionHandler(connection);
+				new Thread(handler).start(); 
 			}
-		}
-		catch(IOException ioe){
-			System.err.println("Couldn't run server on port " + 5555);
-			return;
-		}
+			catch(IOException ioe){
+				System.err.println("Couldn't run server on port " + port);
+				return;
+			}
+	}
 	}
 }
