@@ -4,15 +4,17 @@ import java.net.*;
 
 public class ConnectionHandler implements Runnable{
 	private String username;
+	private int number;
 	private Socket connection;
 	private DataInputStream reader;
 	private DataOutputStream writer;
 	
-	public ConnectionHandler(Socket connection){
+	public ConnectionHandler(Socket connection, ChatServer server){
 		this.connection = connection;
 		try{
 			DataInputStream reader = new DataInputStream(connection.getInputStream());
 			DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
+			this.number = server.addClient(writer);
 		}
 		catch(IOException ioe){
 			System.err.println(ioe.getStackTrace().toString());
