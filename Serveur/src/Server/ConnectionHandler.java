@@ -4,17 +4,20 @@ import java.net.*;
 
 public class ConnectionHandler implements Runnable{
 	private String username;
-	private int number;
 	private Socket connection;
 	private DataInputStream reader;
 	private DataOutputStream writer;
+	private ChatServer server;
 	
 	public ConnectionHandler(Socket connection, ChatServer server){
 		this.connection = connection;
 		try{
 			DataInputStream reader = new DataInputStream(connection.getInputStream());
 			DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
-			this.number = server.addClient(writer);
+			username = reader.readUTF();
+			writer.writeUTF("Hello "+username);
+			server.addClient(this);
+			writer.flush();
 		}
 		catch(IOException ioe){
 			System.err.println(ioe.getStackTrace().toString());
@@ -23,19 +26,19 @@ public class ConnectionHandler implements Runnable{
 	
 	public void run(){
 		try{
-			username = reader.readUTF();
 			String raw = "";
 			while(true){
 				raw = reader.readUTF();
-				String[] tRaw = raw.split("/;");
-				if(tRaw[0].equals("m")){
-					distributeMessage(tRaw[2], tRaw[1]);
-				}
-				else if (tRaw[0].equals("cr")){
-					
-				}
-				else if(tRaw[0].equals("dr")){
-					
+				if(!raw.isEmpty()){
+					String[] tRaw = raw.split("/;");
+					if(tRaw[0].equals("m")){
+						server.distributeMessage(tRaw[2], tRaw[1]);
+					}
+					else if (tRaw[0].equals("cr")){
+					}
+					else if(tRaw[0].equals("dr")){
+						
+					}
 				}
 			}
 		}
@@ -44,13 +47,4 @@ public class ConnectionHandler implements Runnable{
 		}
 	}
 	
-	public void distributeMessage(String message, String to){
-		try{
-			
-		}
-		catch(IOException ioe)
-		{
-			System.err.println(ioe.getStackTrace().toString());
-		}
-	}
 }

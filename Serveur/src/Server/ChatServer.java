@@ -8,7 +8,8 @@ public class ChatServer {
 
 	private ServerSocket server;
 	private int port;
-	private List<DataOutputStream> LClientOut;
+	private List<ConnectionHandler> LClient;
+	private List<Room> LRoom;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -20,7 +21,7 @@ public class ChatServer {
 		try{
 			this.port = port;
 			this. server = new ServerSocket(port);
-			this.LClientOut = new ArrayList<DataOutputStream>();
+			this.LClient = new ArrayList<ConnectionHandler>();
 		}catch(IOException ioe){
 			System.err.println("Couldn't run server on port " + port);
 		}
@@ -30,6 +31,7 @@ public class ChatServer {
 		while(true){
 			try{
 				Socket connection = server.accept();
+				System.out.println("connection");
 				ConnectionHandler handler = new ConnectionHandler(connection, chat);
 				new Thread(handler).start(); 
 			}
@@ -38,10 +40,28 @@ public class ChatServer {
 				return;
 			}
 		}
+	}	
+	
+	public void distributeMessage(String message, String to){
+		
 	}
 	
-	public int addClient(DataOutputStream out){
-		LClientOut.add(out);
-		return LClientOut.size()-1;
+	public void addClient(ConnectionHandler Client){
+		LClient.add(Client);
 	}
+	
+	public void delClient(ConnectionHandler Client){
+		LClient.remove(Client);
+	}
+	
+	public void addRoom(String name, String owner){
+		Room r = new Room(name, owner);
+		LRoom.add(r);
+	}
+	
+	public void delRoom(Room r){
+		LRoom.remove(r);
+	}
+
+	
 }
