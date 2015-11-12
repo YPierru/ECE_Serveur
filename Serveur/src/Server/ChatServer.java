@@ -33,7 +33,9 @@ public class ChatServer {
 				Socket connection = server.accept();
 				System.out.println("connection");
 				ConnectionHandler handler = new ConnectionHandler(connection, chat);
-				new Thread(handler).start(); 
+				addClient(handler);
+				int index = LClient.indexOf(handler);
+				new Thread(LClient.get(index)).start();
 			}
 			catch(IOException ioe){
 				System.err.println("Couldn't run server on port " + port);

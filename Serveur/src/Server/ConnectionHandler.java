@@ -26,7 +26,6 @@ public class ConnectionHandler implements Runnable{
 	public void run(){
 		try{
 			String raw = "";
-			server.addClient(this);
 			while(true){
 				raw = reader.readUTF();
 				if(!raw.isEmpty()){
