@@ -16,7 +16,6 @@ public class ConnectionHandler implements Runnable{
 			DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
 			username = reader.readUTF();
 			writer.writeUTF("Hello "+username);
-			server.addClient(this);
 			writer.flush();
 		}
 		catch(IOException ioe){
@@ -27,6 +26,7 @@ public class ConnectionHandler implements Runnable{
 	public void run(){
 		try{
 			String raw = "";
+			server.addClient(this);
 			while(true){
 				raw = reader.readUTF();
 				if(!raw.isEmpty()){
