@@ -11,12 +11,18 @@ public class ChatServer {
 	private List<ConnectionHandler> listClient;
 	private List<Room> listRoom;
 	
+	/**
+	 * Le main se charge uniquement de démarrer le serveur
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		ChatServer chat = new ChatServer(Integer.parseInt(args[0]));
-		chat.connection(chat);
+		new ChatServer(Integer.parseInt(args[0]));
 	}
 	
+	/**
+	 * Création de la socket server
+	 * @param port
+	 */
 	public ChatServer(int port){
 		try{
 			this.port = port;
@@ -25,15 +31,31 @@ public class ChatServer {
 		}catch(IOException ioe){
 			System.err.println("Couldn't run server on port " + port);
 		}
+		
+		connection();
 	}
 	
-	private void connection(ChatServer chat){
+	/**
+	 * Protocole d'échange côté client
+	 */
+	private void connection(){
 		while(true){
 			try{
+				//Nouveau client connecté
 				Socket connection = server.accept();
-				System.out.println("connection");
-				ConnectionHandler handler = new ConnectionHandler(connection);
+				
+				//On instancie un handler en définissant la fonction abstraite broadcast
+				ConnectionHandler handler = new ConnectionHandler(connection) {
+					
+					@Override
+					public void broadcast(String msg, String usernameReceiver) {
+						distributeMessage(msg,usernameReceiver);
+					}
+				};
+				
+				//Ajout du client à la liste
 				listClient.add(handler);
+				
 				new Thread(handler).start();
 			}
 			catch(IOException ioe){
@@ -43,8 +65,19 @@ public class ChatServer {
 		}
 	}	
 	
-	private void distributeMessage(String message, String to){
-		
+	/**
+	 * Diffuse le message reçu en paramètre à tous les clients connectés, sauf celui ayant envoyé le message
+	 * @param message
+	 * @param usernameReceiver
+	 */
+	private void distributeMessage(String message,String usernameReceiver){
+		String msg;
+		for(ConnectionHandler ch : listClient){
+			if(!ch.getUsername().equals(usernameReceiver)){
+				msg=usernameReceiver+" : "+message;
+				ch.write(msg);
+			}
+		}
 	}
 	
 	private void addClient(ConnectionHandler Client){
