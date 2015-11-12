@@ -7,12 +7,10 @@ public class Room {
 
 	private String name;
 	private String owner;
-	private List<String> LUser;
+	private List<ConnectionHandler> LClient;
 
 	public Room(String name, String owner){
 		this.name  = name;
 		this.owner = owner;
-		LUser = new ArrayList<String>();
-		LUser.add(owner);
 	}
 }
