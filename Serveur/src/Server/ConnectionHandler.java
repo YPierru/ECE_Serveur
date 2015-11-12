@@ -11,25 +11,27 @@ public class ConnectionHandler implements Runnable{
 	public ConnectionHandler(Socket connection){
 		this.connection = connection;
 		try{
-			DataInputStream reader = new DataInputStream(connection.getInputStream());
-			DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
+			reader = new DataInputStream(connection.getInputStream());
+			writer = new DataOutputStream(connection.getOutputStream());
 			username = reader.readUTF();
 			writer.writeUTF("Hello "+username);
 			writer.flush();
 		}
 		catch(IOException ioe){
-			System.err.println(ioe.getStackTrace().toString());
+			System.err.println(ioe);
 		}
 	}
 	
 	public void run(){
 		try{
+			
 			String raw = "";
 			while(true){
-				raw = reader.readUTF();
+				raw=reader.readUTF();
 				if(!raw.isEmpty()){
 					String[] tRaw = raw.split("/;");
 					if(tRaw[0].equals("m")){
+						System.out.println(tRaw[1]+" : "+tRaw[2]);
 					}
 					else if (tRaw[0].equals("cr")){
 					}
@@ -40,7 +42,8 @@ public class ConnectionHandler implements Runnable{
 			}
 		}
 		catch(IOException ioe){
-			System.err.println(ioe.getStackTrace().toString());
+			System.out.println("yo");
+			ioe.printStackTrace();
 		}
 	}
 	
