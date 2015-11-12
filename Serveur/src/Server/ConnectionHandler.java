@@ -7,9 +7,8 @@ public class ConnectionHandler implements Runnable{
 	private Socket connection;
 	private DataInputStream reader;
 	private DataOutputStream writer;
-	private ChatServer server;
 	
-	public ConnectionHandler(Socket connection, ChatServer server){
+	public ConnectionHandler(Socket connection){
 		this.connection = connection;
 		try{
 			DataInputStream reader = new DataInputStream(connection.getInputStream());
@@ -31,7 +30,6 @@ public class ConnectionHandler implements Runnable{
 				if(!raw.isEmpty()){
 					String[] tRaw = raw.split("/;");
 					if(tRaw[0].equals("m")){
-						server.distributeMessage(tRaw[2], tRaw[1]);
 					}
 					else if (tRaw[0].equals("cr")){
 					}

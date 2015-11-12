@@ -32,7 +32,7 @@ public class ChatServer {
 			try{
 				Socket connection = server.accept();
 				System.out.println("connection");
-				ConnectionHandler handler = new ConnectionHandler(connection, chat);
+				ConnectionHandler handler = new ConnectionHandler(connection);
 				addClient(handler);
 				int index = LClient.indexOf(handler);
 				new Thread(LClient.get(index)).start();
