@@ -8,8 +8,8 @@ public class ChatServer {
 
 	private ServerSocket server;
 	private int port;
-	private List<ConnectionHandler> listClient;
-	private List<Room> listRoom;
+	private ArrayList<ConnectionHandler> listClient;
+	private ArrayList<Room> listRoom;
 	
 	/**
 	 * Le main se charge uniquement de démarrer le serveur
@@ -25,6 +25,7 @@ public class ChatServer {
 	 */
 	public ChatServer(int port){
 		try{
+			//listRoom = new ArrayList<>();
 			this.port = port;
 			this.server = new ServerSocket(port);
 			this.listClient = new ArrayList<ConnectionHandler>();
@@ -48,8 +49,13 @@ public class ChatServer {
 				ConnectionHandler handler = new ConnectionHandler(connection) {
 					
 					@Override
-					public void broadcast(String msg, String usernameReceiver) {
-						distributeMessage(msg,usernameReceiver);
+					public void broadcast(String msg, String usernameReceiver, Room roomToSend) {
+						distributeMessage(msg,usernameReceiver,roomToSend);
+					}
+					
+					@Override
+					public void createRoom(String roomName) {
+						addRoom(roomName, this);
 					}
 				};
 				
@@ -70,10 +76,11 @@ public class ChatServer {
 	 * @param message
 	 * @param usernameReceiver
 	 */
-	private void distributeMessage(String message,String usernameReceiver){
+	private void distributeMessage(String message,String usernameReceiver,Room roomToSend){
 		String msg;
-		for(ConnectionHandler ch : listClient){
-			if(!ch.getUsername().equals(usernameReceiver)){
+		
+		for(ConnectionHandler ch : roomToSend.getListClients()){
+			if(!ch.getUsername().equals(roomToSend.getOwnerName())){
 				msg=usernameReceiver+" : "+message;
 				ch.write(msg);
 			}
@@ -88,13 +95,13 @@ public class ChatServer {
 		listClient.remove(Client);
 	}
 	
-	private void addRoom(String name, String owner){
+	private void addRoom(String name, ConnectionHandler owner){
 		Room r = new Room(name, owner);
-		listRoom.add(r);
+		//listRoom.add(r);
 	}
 	
 	private void delRoom(Room r){
-		listRoom.remove(r);
+		//listRoom.remove(r);
 	}
 
 	

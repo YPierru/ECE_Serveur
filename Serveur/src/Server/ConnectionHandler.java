@@ -3,12 +3,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public abstract class ConnectionHandler implements Runnable{
 	private String username;
 	private Socket connection;
 	private DataInputStream reader;
 	private DataOutputStream writer;
+	private ArrayList<Room> listRooms;
+	private Room currentRoom;
 	
 	/**
 	 * Constructeur : création des reader et récupération de l'username
@@ -29,7 +32,7 @@ public abstract class ConnectionHandler implements Runnable{
 	private void getUsernameAndNotify() throws IOException{
 		username=reader.readUTF();
 		System.out.println(username+" est connecté");
-		broadcast("connecté", username);
+		//broadcast("connecté", username);
 	}
 	
 	/**
@@ -40,8 +43,22 @@ public abstract class ConnectionHandler implements Runnable{
 			String raw = "";
 			while(true){
 				raw=reader.readUTF();
-				System.out.println(username+" : "+raw);
-				broadcast(raw,username);
+				System.out.println(raw);
+				if(raw.startsWith("[NewRoom]")){
+					createRoom(raw.replace("[NewRoom]", ""));
+					
+				}else if(raw.startsWith("[SetCurrentRoom]")){
+					for(Room r : listRooms){
+						if(r.getName().equals(raw.replace("[SetCurrentRoom]", ""))){
+							currentRoom=r;
+							break;
+						}
+					}
+					
+				}else{
+					broadcast(raw, username, currentRoom);
+				}
+				//broadcast(raw,username);
 				/*
 				if(!raw.isEmpty()){
 					String[] tRaw = raw.split("/;");
@@ -74,6 +91,11 @@ public abstract class ConnectionHandler implements Runnable{
 		}
 	}
 	
-	public abstract void broadcast(String msg, String usernameReceiver);
+	public void setCurrentRoom(Room room){
+		currentRoom=room;
+	}
+	
+	public abstract void broadcast(String msg, String usernameReceiver, Room roomToSend);
+	public abstract void createRoom(String roomName);
 	
 }
