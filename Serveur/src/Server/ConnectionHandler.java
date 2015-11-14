@@ -7,21 +7,16 @@ import java.util.ArrayList;
 
 public abstract class ConnectionHandler implements Runnable{
 	private String username;
-	private Socket connection;
-	//private DataInputStream reader;
-	//private DataOutputStream writer;
 	private ObjectInputStream reader;
 	private ObjectOutputStream writer;
 	private ArrayList<Room> listRooms;
 	private Room currentRoom;
-	//private RoomManager roomManager;
 	
 	/**
-	 * Constructeur : création des reader et récupération de l'username
+	 * Constructeur : création des reader/Writer et récupération de l'username
 	 * @param connection
 	 */
 	public ConnectionHandler(Socket connection){
-		this.connection = connection;
 		try{
 			reader = new ObjectInputStream(connection.getInputStream());
 			writer = new ObjectOutputStream(connection.getOutputStream());
@@ -51,25 +46,32 @@ public abstract class ConnectionHandler implements Runnable{
 		writer.flush();
 	}
 	
+	/**
+	 * Lis l'username envoyé par le client.
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	private void getUsernameAndNotify() throws IOException, ClassNotFoundException{
 		username=reader.readUTF();
 		System.out.println(username+" est connecté");
 		//broadcast("connecté", username);
 	}
 	
+	
 	/**
-	 * Reçoit un message et le diffuse aux autres clients
+	 * Interface d'écoute du client. Parse le message reçu en fonction de son contenu
 	 */
 	public void run(){
 		try{
 			String msg = "";
 			while(true){
 				msg=reader.readUTF();
-				System.out.println(msg);
+				
 				if(msg.startsWith("[NewRoom]")){
 					createRoom(msg.replace("[NewRoom]", ""));
 					
 				}else if(msg.startsWith("[SetCurrentRoom]")){
+					//On cherche la nouvelle current room avec son nom, on ajoute l'user à celle-ci
 					for(Room r : listRooms){
 						if(r.getName().equals(msg.replace("[SetCurrentRoom]", ""))){
 							currentRoom=r;
@@ -78,6 +80,7 @@ public abstract class ConnectionHandler implements Runnable{
 						}
 					}
 				}else{
+					//On diffuse le message à tous les membres de la currentRoom
 					broadcast(msg, username, currentRoom);
 				}
 			}

@@ -10,7 +10,6 @@ public class ChatServer {
 	private int port;
 	private ArrayList<ConnectionHandler> listClient;
 	private ArrayList<Room> listRoom;
-	//private RoomManager roomManager;
 	
 	/**
 	 * Le main se charge uniquement de démarrer le serveur
@@ -27,7 +26,6 @@ public class ChatServer {
 	public ChatServer(int port){
 		try{
 			listRoom = new ArrayList<>();
-			//roomManager = new RoomManager();
 			this.port = port;
 			this.server = new ServerSocket(port);
 			this.listClient = new ArrayList<ConnectionHandler>();
@@ -39,15 +37,16 @@ public class ChatServer {
 	}
 	
 	/**
-	 * Protocole d'échange côté client
+	 * Protocole d'échange avec le client
 	 */
 	private void connection(){
+		
 		while(true){
 			try{
 				//Nouveau client connecté
 				Socket connection = server.accept();
 				
-				//On instancie un handler en définissant la fonction abstraite broadcast
+				//On instancie un handler en définissant les fonctions abstraites
 				ConnectionHandler handler = new ConnectionHandler(connection) {
 					
 					@Override
@@ -55,24 +54,25 @@ public class ChatServer {
 						distributeMessage(msg,usernameReceiver,roomToSend);
 					}
 					
+					//A chaque creation de room, on met à jour la liste des room, et on l'envoi aux clients.
 					@Override
 					public void createRoom(String roomName) {
 						listRoom.add(new Room(roomName, this));
-						//roomManager.addRoom(newR);
 						try {
 							for(ConnectionHandler client : listClient){
 								client.setListRoom(listRoom);
 								client.sendListRoomsName();
 							}
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
 				};
 				
+				//On set la liste des room
 				handler.setListRoom(listRoom);
 
+				//On l'envoi s'il y a au moins une room
 				if(listRoom.size()>0){
 					handler.sendListRoomsName();
 				}
@@ -90,7 +90,7 @@ public class ChatServer {
 	}	
 	
 	/**
-	 * Diffuse le message reçu en paramètre à tous les clients connectés, sauf celui ayant envoyé le message
+	 * Diffuse le message reçu en paramètre à tous les clients d'une room donnée, sauf celui ayant envoyé le message
 	 * @param message
 	 * @param usernameReceiver
 	 */
