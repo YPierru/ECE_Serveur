@@ -10,6 +10,7 @@ public class ChatServer {
 	private int port;
 	private ArrayList<ConnectionHandler> listClient;
 	private ArrayList<Room> listRoom;
+	//private RoomManager roomManager;
 	
 	/**
 	 * Le main se charge uniquement de démarrer le serveur
@@ -25,7 +26,8 @@ public class ChatServer {
 	 */
 	public ChatServer(int port){
 		try{
-			//listRoom = new ArrayList<>();
+			listRoom = new ArrayList<>();
+			//roomManager = new RoomManager();
 			this.port = port;
 			this.server = new ServerSocket(port);
 			this.listClient = new ArrayList<ConnectionHandler>();
@@ -55,9 +57,25 @@ public class ChatServer {
 					
 					@Override
 					public void createRoom(String roomName) {
-						addRoom(roomName, this);
+						listRoom.add(new Room(roomName, this));
+						//roomManager.addRoom(newR);
+						try {
+							for(ConnectionHandler client : listClient){
+								client.setListRoom(listRoom);
+								client.sendListRoomsName();
+							}
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
 				};
+				
+				handler.setListRoom(listRoom);
+
+				if(listRoom.size()>0){
+					handler.sendListRoomsName();
+				}
 				
 				//Ajout du client à la liste
 				listClient.add(handler);
@@ -76,12 +94,14 @@ public class ChatServer {
 	 * @param message
 	 * @param usernameReceiver
 	 */
-	private void distributeMessage(String message,String usernameReceiver,Room roomToSend){
+	private void distributeMessage(String message,String usernameSender,Room roomToSend){
 		String msg;
 		
+		
 		for(ConnectionHandler ch : roomToSend.getListClients()){
-			if(!ch.getUsername().equals(roomToSend.getOwnerName())){
-				msg=usernameReceiver+" : "+message;
+			if(!ch.getUsername().equals(usernameSender)){
+				System.out.println("envoi depuis le serveur");
+				msg="["+roomToSend.getName()+"]"+"<"+usernameSender+">"+message;
 				ch.write(msg);
 			}
 		}
@@ -93,11 +113,6 @@ public class ChatServer {
 	
 	private void delClient(ConnectionHandler Client){
 		listClient.remove(Client);
-	}
-	
-	private void addRoom(String name, ConnectionHandler owner){
-		Room r = new Room(name, owner);
-		//listRoom.add(r);
 	}
 	
 	private void delRoom(Room r){

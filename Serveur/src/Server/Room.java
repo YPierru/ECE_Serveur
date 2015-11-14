@@ -14,10 +14,13 @@ public class Room {
 		this.owner = owner;
 		this.listClients = new ArrayList<ConnectionHandler>();
 		this.owner.setCurrentRoom(this);
+		addUser(owner);
 	}
 	
 	public void addUser(ConnectionHandler user){
-		listClients.add(user);
+		if(!listClients.contains(user)){
+			listClients.add(user);
+		}
 	}
 	
 	public String getName(){
@@ -31,4 +34,5 @@ public class Room {
 	public ArrayList<ConnectionHandler> getListClients(){
 		return listClients;
 	}
+	
 }

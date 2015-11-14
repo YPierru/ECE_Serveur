@@ -1,17 +1,20 @@
 package Server;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
 public abstract class ConnectionHandler implements Runnable{
 	private String username;
 	private Socket connection;
-	private DataInputStream reader;
-	private DataOutputStream writer;
+	//private DataInputStream reader;
+	//private DataOutputStream writer;
+	private ObjectInputStream reader;
+	private ObjectOutputStream writer;
 	private ArrayList<Room> listRooms;
 	private Room currentRoom;
+	//private RoomManager roomManager;
 	
 	/**
 	 * Constructeur : création des reader et récupération de l'username
@@ -20,16 +23,35 @@ public abstract class ConnectionHandler implements Runnable{
 	public ConnectionHandler(Socket connection){
 		this.connection = connection;
 		try{
-			reader = new DataInputStream(connection.getInputStream());
-			writer = new DataOutputStream(connection.getOutputStream());
+			reader = new ObjectInputStream(connection.getInputStream());
+			writer = new ObjectOutputStream(connection.getOutputStream());
 			getUsernameAndNotify();
 		}
 		catch(IOException ioe){
 			System.err.println(ioe);
+		}catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
-	private void getUsernameAndNotify() throws IOException{
+	public void setListRoom(ArrayList<Room> lr){
+		listRooms=lr;
+	}
+	
+	public void sendListRoomsName() throws IOException{
+		
+		ArrayList<String> names= new ArrayList<>();
+		
+		for(Room r: listRooms){
+			names.add(r.getName());
+		}
+		
+		writer.writeObject(names);
+		writer.flush();
+	}
+	
+	private void getUsernameAndNotify() throws IOException, ClassNotFoundException{
 		username=reader.readUTF();
 		System.out.println(username+" est connecté");
 		//broadcast("connecté", username);
@@ -40,37 +62,24 @@ public abstract class ConnectionHandler implements Runnable{
 	 */
 	public void run(){
 		try{
-			String raw = "";
+			String msg = "";
 			while(true){
-				raw=reader.readUTF();
-				System.out.println(raw);
-				if(raw.startsWith("[NewRoom]")){
-					createRoom(raw.replace("[NewRoom]", ""));
+				msg=reader.readUTF();
+				System.out.println(msg);
+				if(msg.startsWith("[NewRoom]")){
+					createRoom(msg.replace("[NewRoom]", ""));
 					
-				}else if(raw.startsWith("[SetCurrentRoom]")){
+				}else if(msg.startsWith("[SetCurrentRoom]")){
 					for(Room r : listRooms){
-						if(r.getName().equals(raw.replace("[SetCurrentRoom]", ""))){
+						if(r.getName().equals(msg.replace("[SetCurrentRoom]", ""))){
 							currentRoom=r;
+							currentRoom.addUser(this);
 							break;
 						}
 					}
-					
 				}else{
-					broadcast(raw, username, currentRoom);
+					broadcast(msg, username, currentRoom);
 				}
-				//broadcast(raw,username);
-				/*
-				if(!raw.isEmpty()){
-					String[] tRaw = raw.split("/;");
-					if(tRaw[0].equals("m")){
-						System.out.println(username+" : "+tRaw[2]);
-					}
-					else if (tRaw[0].equals("cr")){
-					}
-					else if(tRaw[0].equals("dr")){
-						
-					}
-				}*/
 			}
 		}
 		catch(IOException ioe){
@@ -84,7 +93,7 @@ public abstract class ConnectionHandler implements Runnable{
 	
 	public void write(String msg){
 		try{
-			writer.writeUTF(msg);
+			writer.writeObject(msg);
 			writer.flush();
 		}catch(IOException e){
 			e.printStackTrace();
