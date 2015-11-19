@@ -1,7 +1,9 @@
-package Server;
+package serveur.room;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import serveur.ConnectionHandler;
 
 public class Room {
 

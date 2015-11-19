@@ -1,15 +1,19 @@
-package Server;
+package serveur;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import serveur.commandes.Commandes;
+import serveur.room.Room;
+
 public abstract class ConnectionHandler implements Runnable{
 	private String username;
 	private ObjectInputStream reader;
 	private ObjectOutputStream writer;
 	private ArrayList<Room> listRooms;
+	private ArrayList<ConnectionHandler> listUsers;
 	private Room currentRoom;
 	
 	/**
@@ -30,6 +34,23 @@ public abstract class ConnectionHandler implements Runnable{
 		}
 	}
 	
+	public void setListUsers(ArrayList<ConnectionHandler> lu){
+		listUsers=lu;
+	}
+	
+	public void sendListUserNames() throws IOException{
+		ArrayList<String> names= new ArrayList<>();
+		
+		for(ConnectionHandler u: listUsers){
+			names.add(u.getName());
+		}
+
+		writer.writeObject(Commandes.SEND_LIST_USERS);
+		writer.flush();
+		writer.writeObject(names);
+		writer.flush();
+	}
+	
 	public void setListRoom(ArrayList<Room> lr){
 		listRooms=lr;
 	}
@@ -41,9 +62,14 @@ public abstract class ConnectionHandler implements Runnable{
 		for(Room r: listRooms){
 			names.add(r.getName());
 		}
-		
+		writer.writeObject(Commandes.SEND_LIST_ROOMS);
+		writer.flush();
 		writer.writeObject(names);
 		writer.flush();
+	}
+	
+	public String getName(){
+		return username;
 	}
 	
 	/**
@@ -54,7 +80,6 @@ public abstract class ConnectionHandler implements Runnable{
 	private void getUsernameAndNotify() throws IOException, ClassNotFoundException{
 		username=reader.readUTF();
 		System.out.println(username+" est connecté");
-		//broadcast("connecté", username);
 	}
 	
 	
@@ -67,21 +92,47 @@ public abstract class ConnectionHandler implements Runnable{
 			while(true){
 				msg=reader.readUTF();
 				
-				if(msg.startsWith("[NewRoom]")){
-					createRoom(msg.replace("[NewRoom]", ""));
+				if(msg.startsWith(Commandes.RECEIVE_NEW_ROOM)){
+					String roomName=msg.replace(Commandes.RECEIVE_NEW_ROOM, "");
+					boolean existing = false;
+					Room originalR=null;
+					for(Room r : listRooms){
+						if(r.equals(roomName)){
+							existing=true;
+							originalR=r;
+							break;
+						}
+					}
+					if(!existing){
+						createRoom(roomName);
+					}else{
+						currentRoom=originalR;
+						currentRoom.addUser(this);
+					}
+					if(roomName.startsWith(Commandes.LABEL_ROOM_PVP)){
+						String tmp=roomName.replace(Commandes.LABEL_ROOM_PVP, "");
+						String userPVP = tmp.substring(0, tmp.indexOf("-"));
+						
+						for(ConnectionHandler user : listUsers){
+							if(user.getName().equals(userPVP)){
+								user.write(Commandes.SEND_OPEN_PVP+roomName);
+								break;
+							}
+						}
+					}
 					
-				}else if(msg.startsWith("[SetCurrentRoom]")){
+				}else if(msg.startsWith(Commandes.RECEIVE_SET_ROOM)){
 					//On cherche la nouvelle current room avec son nom, on ajoute l'user à celle-ci
 					for(Room r : listRooms){
-						if(r.getName().equals(msg.replace("[SetCurrentRoom]", ""))){
+						if(r.getName().equals(msg.replace(Commandes.RECEIVE_SET_ROOM, ""))){
 							currentRoom=r;
 							currentRoom.addUser(this);
 							break;
 						}
 					}
-				}else{
+				}else if(msg.startsWith(Commandes.RECEIVE_MESSAGE)){
 					//On diffuse le message à tous les membres de la currentRoom
-					broadcast(msg, username, currentRoom);
+					broadcast(msg.replace(Commandes.RECEIVE_MESSAGE, ""), username, currentRoom);
 				}
 			}
 		}

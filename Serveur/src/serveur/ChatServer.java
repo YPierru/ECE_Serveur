@@ -1,8 +1,10 @@
-package Server;
+package serveur;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import serveur.room.Room;
 
 public class ChatServer {
 
@@ -50,14 +52,16 @@ public class ChatServer {
 				ConnectionHandler handler = new ConnectionHandler(connection) {
 					
 					@Override
-					public void broadcast(String msg, String usernameReceiver, Room roomToSend) {
-						distributeMessage(msg,usernameReceiver,roomToSend);
+					public void broadcast(String msg, String usernameSender, Room roomToSend) {
+						distributeMessage(msg,usernameSender,roomToSend);
 					}
 					
 					//A chaque creation de room, on met à jour la liste des room, et on l'envoi aux clients.
 					@Override
 					public void createRoom(String roomName) {
-						listRoom.add(new Room(roomName, this));
+						Room r = new Room(roomName,this);
+						listRoom.add(r);
+						setCurrentRoom(r);
 						try {
 							for(ConnectionHandler client : listClient){
 								client.setListRoom(listRoom);
@@ -68,22 +72,26 @@ public class ChatServer {
 						}
 					}
 				};
+				//Ajout du client à la liste
+				listClient.add(handler);
+				
+				
+				for(ConnectionHandler ch : listClient){
+					ch.setListUsers(listClient);
+					ch.sendListUserNames();
+				}
 				
 				//On set la liste des room
 				handler.setListRoom(listRoom);
 
-				//On l'envoi s'il y a au moins une room
-				if(listRoom.size()>0){
-					handler.sendListRoomsName();
-				}
+				handler.sendListRoomsName();
+
 				
-				//Ajout du client à la liste
-				listClient.add(handler);
 				
 				new Thread(handler).start();
 			}
 			catch(IOException ioe){
-				System.err.println("Couldn't run server on port " + port);
+				ioe.printStackTrace();
 				return;
 			}
 		}
@@ -97,26 +105,12 @@ public class ChatServer {
 	private void distributeMessage(String message,String usernameSender,Room roomToSend){
 		String msg;
 		
-		
 		for(ConnectionHandler ch : roomToSend.getListClients()){
 			if(!ch.getUsername().equals(usernameSender)){
-				System.out.println("envoi depuis le serveur");
 				msg="["+roomToSend.getName()+"]"+"<"+usernameSender+">"+message;
 				ch.write(msg);
 			}
 		}
-	}
-	
-	private void addClient(ConnectionHandler Client){
-		listClient.add(Client);
-	}
-	
-	private void delClient(ConnectionHandler Client){
-		listClient.remove(Client);
-	}
-	
-	private void delRoom(Room r){
-		//listRoom.remove(r);
 	}
 
 	
